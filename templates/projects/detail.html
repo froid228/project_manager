@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% block title %}{{ project.name }}{% endblock %}
+{% block content %}
+<nav aria-label="breadcrumb" class="animate-fade">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="/projects/">Проекты</a></li>
+    <li class="breadcrumb-item active">{{ project.name }}</li>
+  </ol>
+</nav>
+
+<div class="card mb-4 shadow-sm border-0 animate-fade">
+  <div class="card-body">
+    <h3>{{ project.name }}</h3>
+    <p class="text-muted mb-3">{{ project.description|default:"Нет описания" }}</p>
+    <div>
+      <span class="badge bg-primary me-2">👤 {{ project.owner.username }}</span>
+      <span class="badge bg-secondary">📅 {{ project.created_at|date:"d.m.Y" }}</span>
+    </div>
+  </div>
+</div>
+
+<!-- Форма создания задачи (для admin/manager/owner) -->
+{% if user.role == 'admin' or user.role == 'manager' or project.owner == user %}
+<div class="card mb-4 shadow-sm border-0 animate-fade">
+  <div class="card-header bg-white fw-bold">➕ Добавить задачу</div>
+  <div class="card-body">
+    <form method="post" class="row g-2">{% csrf_token %}
+      <div class="col-md-6">{{ form.title }}</div>
+      <div class="col-md-3">{{ form.priority }}</div>
+      <div class="col-md-3">{{ form.deadline }}</div>
+      <div class="col-md-6">{{ form.description }}</div>
+      <div class="col-md-3">{{ form.assignee }}</div>
+      <div class="col-md-3">{{ form.status }}</div>
+      <div class="col-12 mt-2">
+        <button type="submit" class="btn btn-success">Добавить задачу</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+<div class="row">
+  <!-- Список задач -->
+  <div class="col-md-8">
+    <div class="card shadow-sm border-0 animate-fade">
+      <div class="card-header bg-white fw-bold">📋 Задачи ({{ tasks.count }})</div>
+      <div class="card-body p-0">
+        <table class="table table-hover mb-0">
+          <thead class="table-light">
+            <tr><th>Название</th><th>Статус</th><th>Приоритет</th><th>Исполнитель</th><th>Дедлайн</th></tr>
+          </thead>
+          <tbody>
+            {% for task in tasks %}
+            <tr>
+              <td>{{ task.title }}</td>
+              <td><span class="badge bg-{% if task.status == 'done' %}success{% elif task.status == 'in_progress' %}warning{% else %}secondary{% endif %}">{{ task.get_status_display }}</span></td>
+              <td><span class="badge bg-{% if task.priority == 'high' %}danger{% elif task.priority == 'medium' %}warning{% else %}info{% endif %} text-dark">{{ task.get_priority_display }}</span></td>
+              <td>{{ task.assignee.username|default:"—" }}</td>
+              <td>{{ task.deadline|date:"d.m.Y"|default:"—" }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5" class="text-center text-muted py-4">Задач пока нет</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Участники -->
+  <div class="col-md-4">
+    <div class="card shadow-sm border-0 animate-fade">
+      <div class="card-header bg-white fw-bold">👥 Участники ({{ members.count }})</div>
+      <ul class="list-group list-group-flush">
+        {% for m in members %}
+        <li class="list-group-item d-flex justify-content-between align-items-center">
+          {{ m.user.username }}
+          <span class="badge bg-light text-dark border">{{ m.get_role_display }}</span>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+</div>
+{% endblock %}

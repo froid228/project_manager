@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block title %}Проекты{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4 animate-fade">
+  <h2>Мои проекты</h2>
+</div>
+
+<!-- Форма создания проекта (только для admin/manager) -->
+{% if user.role == 'admin' or user.role == 'manager' %}
+<div class="card mb-4 shadow-sm border-0 animate-fade">
+  <div class="card-header bg-white fw-bold">➕ Создать новый проект</div>
+  <div class="card-body">
+    <form method="post" class="row g-3">{% csrf_token %}
+      <div class="col-md-8">
+        {{ form.name }}
+      </div>
+      <div class="col-md-4">
+        {{ form.description }}
+      </div>
+      <div class="col-12">
+        <button type="submit" class="btn btn-primary">Создать проект</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+<!-- Список проектов -->
+<div class="row">
+  {% for project in projects %}
+  <div class="col-md-4 mb-4">
+    <div class="card h-100 shadow-sm border-0 animate-fade delay-{{ forloop.counter }}">
+      <div class="card-body">
+        <h5 class="card-title">{{ project.name }}</h5>
+        <p class="card-text text-muted small">{{ project.description|truncatewords:15|default:"Без описания" }}</p>
+        <div class="d-flex justify-content-between align-items-center mt-3">
+          <span class="badge bg-info text-dark">{{ project.tasks.count }} задач</span>
+          <a href="/projects/{{ project.id }}/" class="btn btn-outline-primary btn-sm">Открыть →</a>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% empty %}
+  <div class="col-12 text-center py-5 text-muted">
+    <i class="bi bi-folder2-open fs-1 d-block mb-3"></i>
+    У вас пока нет проектов.
+  </div>
+  {% endfor %}
+</div>
+{% endblock %}

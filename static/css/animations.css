@@ -1,0 +1,39 @@
+/* Плавное появление блоков при загрузке страницы */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(15px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade {
+    animation: fadeIn 0.5s ease-out forwards;
+}
+
+/* Эффект "подпрыгивания" карточек при наведении */
+.card {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    border: none; /* Убираем стандартную рамку */
+}
+.card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 20px rgba(0,0,0,0.1) !important;
+}
+
+/* Приятное нажатие на кнопки */
+.btn {
+    transition: all 0.2s ease;
+}
+.btn:active {
+    transform: scale(0.96);
+}
+
+/* Таблицы тоже пусть появляются плавно */
+.table-hover tbody tr:hover {
+    background-color: #f8f9fa;
+    transition: background-color 0.2s;
+}
+/* Каскадная задержка для списка */
+.delay-1 { animation-delay: 0.1s; opacity: 0; }
+.delay-2 { animation-delay: 0.2s; opacity: 0; }
+.delay-3 { animation-delay: 0.3s; opacity: 0; }
+.delay-4 { animation-delay: 0.4s; opacity: 0; }
+.delay-5 { animation-delay: 0.5s; opacity: 0; }
+.delay-6 { animation-delay: 0.6s; opacity: 0; }

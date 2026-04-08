@@ -15,7 +15,7 @@ class ProjectViewSet(viewsets.ModelViewSet):
         return Project.objects.filter(owner=user) | Project.objects.filter(memberships__user=user)
 
     def get_permissions(self):
-        if self.action in ('update', 'partial_update', 'destroy'):
+        if self.action in ('create','update', 'partial_update', 'destroy'):
             return [CanManageProject()]
         return super().get_permissions()
 

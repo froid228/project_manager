@@ -17,7 +17,7 @@
           <span class="nav-link text-white-50 small">{{ user.username }} <span class="badge bg-warning text-dark">{{ user.get_role_display }}</span></span>
           <a class="nav-link" href="/projects/">Проекты</a>
           <a class="nav-link" href="/tasks/">Задачи</a>
-          <form action="/logout/" method="post" class="d-inline">{% csrf_token %}<button class="btn btn-sm btn-outline-light ms-2">Выйти</button></form>
+          <a href="/logout/" class="btn btn-sm btn-outline-light ms-2">Выйти</a>
         {% else %}
           <a class="nav-link" href="/login/">Войти</a>
         {% endif %}

@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load russian_plural %}
 {% block title %}{{ project.name }}{% endblock %}
 {% block content %}
 <nav aria-label="breadcrumb" class="animate-fade">
@@ -43,7 +44,7 @@
   <!-- Список задач -->
   <div class="col-md-8">
     <div class="card shadow-sm border-0 animate-fade">
-      <div class="card-header bg-white fw-bold">📋 Задачи ({{ tasks.count }})</div>
+      <div class="card-header bg-white fw-bold">📋 {{ tasks.count|ru_plural:"задача,задачи,задач" }}</div>
       <div class="card-body p-0">
         <table class="table table-hover mb-0">
           <thead class="table-light">
@@ -70,7 +71,7 @@
   <!-- Участники -->
   <div class="col-md-4">
     <div class="card shadow-sm border-0 animate-fade">
-      <div class="card-header bg-white fw-bold">👥 Участники ({{ members.count }})</div>
+      <div class="card-header bg-white fw-bold">👥 {{ members.count|ru_plural:"участник,участника,участников" }}</div>
       <ul class="list-group list-group-flush">
         {% for m in members %}
         <li class="list-group-item d-flex justify-content-between align-items-center">

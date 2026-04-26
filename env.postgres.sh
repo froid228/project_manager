@@ -1,0 +1,5 @@
+export POSTGRES_DB=project_manager
+export POSTGRES_USER=alekseirumancev
+export POSTGRES_PASSWORD=
+export POSTGRES_HOST=localhost
+export POSTGRES_PORT=5544

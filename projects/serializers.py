@@ -2,6 +2,7 @@ from rest_framework import serializers
 from .models import Project, ProjectMember
 from users.serializers import UserSerializer
 
+
 class ProjectMemberSerializer(serializers.ModelSerializer):
     user = UserSerializer(read_only=True)
     user_id = serializers.PrimaryKeyRelatedField(queryset=ProjectMember._meta.get_field('user').related_model.objects.all(), write_only=True, source='user')

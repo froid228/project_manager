@@ -1,10 +1,11 @@
 from rest_framework import generics
 from rest_framework.permissions import IsAdminUser, IsAuthenticated
 from .models import User
+from .forms import UserRegistrationForm
 from .serializers import UserSerializer
 
 class UserListCreateView(generics.ListCreateAPIView):
-    queryset = User.objects.all()
+    queryset = User.objects.order_by('id')
     serializer_class = UserSerializer
     permission_classes = [IsAdminUser]
 
@@ -16,7 +17,7 @@ class UserDetailView(generics.RetrieveUpdateDestroyAPIView):
     def get_queryset(self):
         if self.request.user.role == 'admin':
             return super().get_queryset()
-        return User.objects.filter(id=self.request.user.id)
+        return User.objects.filter(id=self.request.user.id).order_by('id')
 
 from django.shortcuts import render, redirect
 from django.contrib.auth import authenticate, login
@@ -32,3 +33,18 @@ def login_view(request):
             return redirect('/')
         messages.error(request, 'Неверные данные')
     return render(request, 'login.html')
+
+
+@csrf_protect
+def register_view(request):
+    if request.method == 'POST':
+        form = UserRegistrationForm(request.POST)
+        if form.is_valid():
+            user = form.save()
+            login(request, user)
+            messages.success(request, 'Регистрация успешно завершена.')
+            return redirect('/')
+    else:
+        form = UserRegistrationForm()
+
+    return render(request, 'register.html', {'form': form})

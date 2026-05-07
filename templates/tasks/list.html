@@ -7,7 +7,7 @@
 
 <!-- Форма создания задачи -->
 <div class="card mb-4 shadow-sm border-0 animate-fade">
-  <div class="card-header bg-white fw-bold">➕ Создать задачу</div>
+  <div class="card-header bg-white fw-bold">Создать задачу</div>
   <div class="card-body">
     <form method="post" class="row g-3">{% csrf_token %}
       
@@ -94,7 +94,24 @@
               {{ task.get_priority_display }}
             </span>
           </td>
-          <td>{{ task.assignee.username|default:"Не назначен" }}</td>
+          <td>
+            {% if task.can_change_assignee %}
+              <form method="post">{% csrf_token %}
+                <input type="hidden" name="action" value="change_assignee">
+                <input type="hidden" name="task_id" value="{{ task.id }}">
+                <select name="assignee" class="form-select form-select-sm" onchange="this.form.submit()" style="min-width: 190px;">
+                  <option value="">Не назначен</option>
+                  {% for assignee in task.assignee_options %}
+                    <option value="{{ assignee.id }}" {% if task.assignee_id == assignee.id %}selected{% endif %}>
+                      {{ assignee.username }} ({{ assignee.get_role_display }})
+                    </option>
+                  {% endfor %}
+                </select>
+              </form>
+            {% else %}
+              {{ task.assignee.username|default:"Не назначен" }}
+            {% endif %}
+          </td>
           <td>{{ task.deadline|date:"d.m.Y"|default:"—" }}</td>
           
           <!-- Удаление (только если done и есть права) -->

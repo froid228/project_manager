@@ -6,6 +6,7 @@ __pycache__/
 
 # Virtual Environment
 venv/
+fresh_venv/
 env/
 ENV/
 env.bak/
@@ -15,6 +16,12 @@ env.bak/
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
+
+# Test and coverage artifacts
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
 
 # IDE
 .vscode/

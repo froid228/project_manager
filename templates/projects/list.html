@@ -13,11 +13,35 @@
   <div class="card-body">
     <form method="post" class="row g-3">{% csrf_token %}
       <div class="col-md-8">
+        <label class="form-label">Название проекта</label>
         {{ form.name }}
       </div>
       <div class="col-md-4">
+        <label class="form-label">Описание</label>
         {{ form.description }}
       </div>
+      <div class="col-md-8">
+        <label class="form-label">Участники проекта</label>
+        <div class="border rounded p-3 bg-light" style="max-height: 180px; overflow-y: auto;">
+          {% for checkbox in form.members %}
+            <div class="form-check">
+              {{ checkbox.tag }}
+              <label class="form-check-label" for="{{ checkbox.id_for_label }}">{{ checkbox.choice_label }}</label>
+            </div>
+          {% empty %}
+            <div class="text-muted">Нет доступных пользователей</div>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="col-md-4">
+        <label class="form-label">Роль участников</label>
+        {{ form.member_role }}
+      </div>
+      {% if form.errors %}
+        <div class="col-12">
+          <div class="alert alert-danger mb-0">Проверьте данные проекта и попробуйте снова.</div>
+        </div>
+      {% endif %}
       <div class="col-12">
         <button type="submit" class="btn btn-primary">Создать проект</button>
       </div>

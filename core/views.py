@@ -3,7 +3,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q
-from projects.models import Project
+from projects.models import Project, ProjectMember
 from tasks.models import Task
 from projects.forms import ProjectForm
 from tasks.forms import TaskForm
@@ -37,15 +37,22 @@ def dashboard(request):
 def project_list(request):
     user = request.user
     if request.method == 'POST' and user.role in ('admin', 'manager'):
-        form = ProjectForm(request.POST)
+        form = ProjectForm(request.POST, current_user=user)
         if form.is_valid():
             project = form.save(commit=False)
             project.owner = user
             project.save()
+            member_role = form.cleaned_data.get('member_role') or 'member'
+            for member in form.cleaned_data.get('members', []):
+                ProjectMember.objects.get_or_create(
+                    project=project,
+                    user=member,
+                    defaults={'role': member_role},
+                )
             messages.success(request, 'Проект успешно создан!')
             return redirect('project-list')
     else:
-        form = ProjectForm()
+        form = ProjectForm(current_user=user)
 
     if user.role == 'admin':
         projects = Project.objects.all()
@@ -62,22 +69,49 @@ def project_detail(request, pk):
 
     can_add_task = request.user.role != 'observer' and can_access_project(request.user, project)
 
-    if request.method == 'POST' and can_add_task:
-        form = TaskForm(request.POST)
-        form.fields['assignee'].queryset = project_people_queryset(project)
-        if form.is_valid():
-            task = form.save(commit=False)
-            task.project = project
-            task.save()
-            messages.success(request, 'Задача успешно добавлена!')
+    if request.method == 'POST':
+        action = request.POST.get('action')
+
+        if action == 'change_assignee':
+            task = get_object_or_404(project.tasks, pk=request.POST.get('task_id'))
+            assignee_id = request.POST.get('assignee')
+            if not can_manage_project(request.user, project):
+                messages.error(request, 'У вас нет прав на изменение исполнителя.')
+            elif not assignee_id:
+                task.assignee = None
+                task.save(update_fields=['assignee'])
+                messages.success(request, 'Исполнитель снят.')
+            else:
+                assignee = project_people_queryset(project).filter(pk=assignee_id).first()
+                if not assignee:
+                    messages.error(request, 'Исполнитель должен быть владельцем или участником проекта.')
+                else:
+                    task.assignee = assignee
+                    task.save(update_fields=['assignee'])
+                    messages.success(request, f'Исполнитель обновлён: {assignee.username}')
             return redirect('project-detail', pk=pk)
+
+        if can_add_task:
+            form = TaskForm(request.POST)
+            form.fields['assignee'].queryset = project_people_queryset(project)
+            if form.is_valid():
+                task = form.save(commit=False)
+                task.project = project
+                task.save()
+                messages.success(request, 'Задача успешно добавлена!')
+                return redirect('project-detail', pk=pk)
     else:
         form = TaskForm()
     form.fields['assignee'].queryset = project_people_queryset(project)
+    tasks = project.tasks.all().order_by('-deadline')
+    assignee_options = project_people_queryset(project)
+    for task in tasks:
+        task.assignee_options = assignee_options
+        task.can_change_assignee = can_manage_project(request.user, project)
 
     return render(request, 'projects/detail.html', {
         'project': project,
-        'tasks': project.tasks.all().order_by('-deadline'),
+        'tasks': tasks,
         'members': project.memberships.select_related('user').all(),
         'form': form,
         'status_choices': Task.STATUS_CHOICES  # ⬅️ Добавлено
@@ -136,6 +170,29 @@ def task_list(request):
                 messages.error(request, 'Задача не найдена.')
             return redirect('task-list')
 
+        elif action == 'change_assignee':
+            task_id = request.POST.get('task_id')
+            assignee_id = request.POST.get('assignee')
+            try:
+                task = tasks.get(pk=task_id)
+                if not can_manage_project(user, task.project):
+                    messages.error(request, 'У вас нет прав на изменение исполнителя.')
+                elif not assignee_id:
+                    task.assignee = None
+                    task.save(update_fields=['assignee'])
+                    messages.success(request, 'Исполнитель снят.')
+                else:
+                    assignee = project_people_queryset(task.project).filter(pk=assignee_id).first()
+                    if not assignee:
+                        messages.error(request, 'Исполнитель должен быть владельцем или участником проекта.')
+                    else:
+                        task.assignee = assignee
+                        task.save(update_fields=['assignee'])
+                        messages.success(request, f'Исполнитель обновлён: {assignee.username}')
+            except Task.DoesNotExist:
+                messages.error(request, 'Задача не найдена.')
+            return redirect('task-list')
+
         # ➕ Создание новой задачи (стандартная логика)
         else:
             project_id = request.POST.get('project')
@@ -168,6 +225,10 @@ def task_list(request):
         Q(id__in=projects.values_list('owner_id', flat=True))
         | Q(projectmember__project__in=projects)
     ).distinct()
+
+    for task in tasks:
+        task.assignee_options = project_people_queryset(task.project)
+        task.can_change_assignee = can_manage_project(user, task.project)
 
     return render(request, 'tasks/list.html', {
         'tasks': tasks,

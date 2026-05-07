@@ -3,7 +3,7 @@ from django.urls import path, include
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from django.conf import settings
 from django.conf.urls.static import static
-from users.views import login_view
+from users.views import login_view, register_view
 from django.contrib.auth.views import LogoutView
 
 urlpatterns = [
@@ -14,6 +14,7 @@ urlpatterns = [
     path('api/', include('projects.urls')),
     path('api/', include('tasks.urls')),
     path('login/', login_view, name='login'),
+    path('register/', register_view, name='register'),
     path('', include('core.web_urls')),
-    path('logout/', LogoutView.as_view(next_page='login'), name='logout'),
+    path('logout/', LogoutView.as_view(next_page='register'), name='logout'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

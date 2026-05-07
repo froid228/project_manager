@@ -35,7 +35,7 @@ class ProjectMemberViewSet(viewsets.ModelViewSet):
         return project
 
     def get_queryset(self):
-        return self.get_project().memberships.select_related('user').all()
+        return self.get_project().memberships.select_related('user').order_by('id')
 
     def perform_create(self, serializer):
         project = self.get_project()

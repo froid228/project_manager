@@ -14,8 +14,8 @@
     <h3>{{ project.name }}</h3>
     <p class="text-muted mb-3">{{ project.description|default:"Нет описания" }}</p>
     <div>
-      <span class="badge bg-primary me-2">👤 {{ project.owner.username }}</span>
-      <span class="badge bg-secondary">📅 {{ project.created_at|date:"d.m.Y" }}</span>
+      <span class="badge bg-primary me-2">{{ project.owner.username }}</span>
+      <span class="badge bg-secondary">{{ project.created_at|date:"d.m.Y" }}</span>
     </div>
   </div>
 </div>
@@ -23,15 +23,38 @@
 <!-- Форма создания задачи (для admin/manager/owner) -->
 {% if user.role == 'admin' or user.role == 'manager' or project.owner == user %}
 <div class="card mb-4 shadow-sm border-0 animate-fade">
-  <div class="card-header bg-white fw-bold">➕ Добавить задачу</div>
+  <div class="card-header bg-white fw-bold">Добавить задачу</div>
   <div class="card-body">
-    <form method="post" class="row g-2">{% csrf_token %}
-      <div class="col-md-6">{{ form.title }}</div>
-      <div class="col-md-3">{{ form.priority }}</div>
-      <div class="col-md-3">{{ form.deadline }}</div>
-      <div class="col-md-6">{{ form.description }}</div>
-      <div class="col-md-3">{{ form.assignee }}</div>
-      <div class="col-md-3">{{ form.status }}</div>
+    <form method="post" class="row g-3">{% csrf_token %}
+      <div class="col-md-6">
+        <label class="form-label">Название задачи</label>
+        {{ form.title }}
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Приоритет</label>
+        {{ form.priority }}
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Дедлайн</label>
+        {{ form.deadline }}
+      </div>
+      <div class="col-md-6">
+        <label class="form-label">Описание</label>
+        {{ form.description }}
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Исполнитель</label>
+        {{ form.assignee }}
+      </div>
+      <div class="col-md-3">
+        <label class="form-label">Статус</label>
+        {{ form.status }}
+      </div>
+      {% if form.errors %}
+        <div class="col-12">
+          <div class="alert alert-danger mb-0">Проверьте данные задачи и попробуйте снова.</div>
+        </div>
+      {% endif %}
       <div class="col-12 mt-2">
         <button type="submit" class="btn btn-success">Добавить задачу</button>
       </div>
@@ -44,7 +67,7 @@
   <!-- Список задач -->
   <div class="col-md-8">
     <div class="card shadow-sm border-0 animate-fade">
-      <div class="card-header bg-white fw-bold">📋 {{ tasks.count|ru_plural:"задача,задачи,задач" }}</div>
+      <div class="card-header bg-white fw-bold">{{ tasks.count|ru_plural:"задача,задачи,задач" }}</div>
       <div class="card-body p-0">
         <table class="table table-hover mb-0">
           <thead class="table-light">
@@ -56,7 +79,24 @@
               <td>{{ task.title }}</td>
               <td><span class="badge bg-{% if task.status == 'done' %}success{% elif task.status == 'in_progress' %}warning{% else %}secondary{% endif %}">{{ task.get_status_display }}</span></td>
               <td><span class="badge bg-{% if task.priority == 'high' %}danger{% elif task.priority == 'medium' %}warning{% else %}info{% endif %} text-dark">{{ task.get_priority_display }}</span></td>
-              <td>{{ task.assignee.username|default:"—" }}</td>
+              <td>
+                {% if task.can_change_assignee %}
+                  <form method="post">{% csrf_token %}
+                    <input type="hidden" name="action" value="change_assignee">
+                    <input type="hidden" name="task_id" value="{{ task.id }}">
+                    <select name="assignee" class="form-select form-select-sm" onchange="this.form.submit()" style="min-width: 190px;">
+                      <option value="">Не назначен</option>
+                      {% for assignee in task.assignee_options %}
+                        <option value="{{ assignee.id }}" {% if task.assignee_id == assignee.id %}selected{% endif %}>
+                          {{ assignee.username }} ({{ assignee.get_role_display }})
+                        </option>
+                      {% endfor %}
+                    </select>
+                  </form>
+                {% else %}
+                  {{ task.assignee.username|default:"—" }}
+                {% endif %}
+              </td>
               <td>{{ task.deadline|date:"d.m.Y"|default:"—" }}</td>
             </tr>
             {% empty %}
@@ -71,7 +111,7 @@
   <!-- Участники -->
   <div class="col-md-4">
     <div class="card shadow-sm border-0 animate-fade">
-      <div class="card-header bg-white fw-bold">👥 {{ members.count|ru_plural:"участник,участника,участников" }}</div>
+      <div class="card-header bg-white fw-bold">{{ members.count|ru_plural:"участник,участника,участников" }}</div>
       <ul class="list-group list-group-flush">
         {% for m in members %}
         <li class="list-group-item d-flex justify-content-between align-items-center">

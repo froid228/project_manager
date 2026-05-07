@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% block auth_nav %}{% endblock %}
 {% block content %}
 <div class="row justify-content-center mt-5">
   <div class="col-md-5">
@@ -9,6 +10,9 @@
         <input type="password" name="password" class="form-control mb-3" placeholder="Пароль" required>
         <button type="submit" class="btn btn-primary w-100">Войти</button>
       </form>
+      <div class="text-center mt-3">
+        <a href="{% url 'register' %}">Создать аккаунт</a>
+      </div>
       {% if messages %}{% for msg in messages %}<div class="alert alert-danger mt-3">{{ msg }}</div>{% endfor %}{% endif %}
     </div></div>
   </div>

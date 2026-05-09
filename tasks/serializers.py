@@ -1,5 +1,5 @@
 from rest_framework import serializers
-from .models import Task
+from .models import Task, TaskComment, TaskHistory
 from core.permissions import can_access_project
 
 class TaskSerializer(serializers.ModelSerializer):
@@ -41,3 +41,21 @@ class TaskSerializer(serializers.ModelSerializer):
                 )
 
         return attrs
+
+
+class TaskCommentSerializer(serializers.ModelSerializer):
+    author_name = serializers.CharField(source='author.username', read_only=True)
+
+    class Meta:
+        model = TaskComment
+        fields = ('id', 'task', 'author', 'author_name', 'text', 'created_at', 'updated_at')
+        read_only_fields = ('id', 'task', 'author', 'author_name', 'created_at', 'updated_at')
+
+
+class TaskHistorySerializer(serializers.ModelSerializer):
+    user_name = serializers.CharField(source='user.username', read_only=True)
+
+    class Meta:
+        model = TaskHistory
+        fields = ('id', 'task', 'user', 'user_name', 'field_name', 'old_value', 'new_value', 'created_at')
+        read_only_fields = fields

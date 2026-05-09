@@ -12,6 +12,9 @@ class ProjectViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return Project.objects.none()
+
         user = self.request.user
         if user.role == 'admin':
             return Project.objects.all()
@@ -29,13 +32,19 @@ class ProjectMemberViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_project(self):
+        if getattr(self, 'swagger_fake_view', False):
+            return None
+
         project = get_object_or_404(Project, pk=self.kwargs.get('project_pk'))
         if not can_access_project(self.request.user, project):
             raise PermissionDenied('Нет доступа к участникам этого проекта.')
         return project
 
     def get_queryset(self):
-        return self.get_project().memberships.select_related('user').order_by('id')
+        project = self.get_project()
+        if project is None:
+            return ProjectMember.objects.none()
+        return project.memberships.select_related('user').order_by('id')
 
     def perform_create(self, serializer):
         project = self.get_project()

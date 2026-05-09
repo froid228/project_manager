@@ -1,4 +1,5 @@
 from rest_framework import serializers
+from drf_spectacular.utils import extend_schema_field
 from .models import Project, ProjectMember
 from users.serializers import UserSerializer
 
@@ -20,6 +21,7 @@ class ProjectSerializer(serializers.ModelSerializer):
         fields = ('id', 'name', 'description', 'owner', 'members', 'tasks_count', 'created_at')
         read_only_fields = ('owner', 'created_at')
 
+    @extend_schema_field(serializers.IntegerField)
     def get_tasks_count(self, obj):
         return obj.tasks.count()
 

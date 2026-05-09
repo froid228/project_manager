@@ -5,6 +5,7 @@ from django.contrib import messages
 from django.db.models import Q
 from projects.models import Project, ProjectMember
 from tasks.models import Task
+from tasks.views import record_task_history
 from projects.forms import ProjectForm
 from tasks.forms import TaskForm
 from core.permissions import can_access_project, can_manage_project
@@ -78,16 +79,20 @@ def project_detail(request, pk):
             if not can_manage_project(request.user, project):
                 messages.error(request, 'У вас нет прав на изменение исполнителя.')
             elif not assignee_id:
+                old_assignee_id = task.assignee_id
                 task.assignee = None
                 task.save(update_fields=['assignee'])
+                record_task_history(task, request.user, 'assignee', old_assignee_id, None)
                 messages.success(request, 'Исполнитель снят.')
             else:
                 assignee = project_people_queryset(project).filter(pk=assignee_id).first()
                 if not assignee:
                     messages.error(request, 'Исполнитель должен быть владельцем или участником проекта.')
                 else:
+                    old_assignee_id = task.assignee_id
                     task.assignee = assignee
                     task.save(update_fields=['assignee'])
+                    record_task_history(task, request.user, 'assignee', old_assignee_id, assignee.id)
                     messages.success(request, f'Исполнитель обновлён: {assignee.username}')
             return redirect('project-detail', pk=pk)
 
@@ -163,8 +168,10 @@ def task_list(request):
                 elif new_status not in dict(Task.STATUS_CHOICES):
                     messages.error(request, 'Некорректный статус.')
                 else:
+                    old_status = task.status
                     task.status = new_status
                     task.save(update_fields=['status'])
+                    record_task_history(task, user, 'status', old_status, new_status)
                     messages.success(request, f'Статус обновлён: {dict(Task.STATUS_CHOICES)[new_status]}')
             except Task.DoesNotExist:
                 messages.error(request, 'Задача не найдена.')
@@ -178,16 +185,20 @@ def task_list(request):
                 if not can_manage_project(user, task.project):
                     messages.error(request, 'У вас нет прав на изменение исполнителя.')
                 elif not assignee_id:
+                    old_assignee_id = task.assignee_id
                     task.assignee = None
                     task.save(update_fields=['assignee'])
+                    record_task_history(task, user, 'assignee', old_assignee_id, None)
                     messages.success(request, 'Исполнитель снят.')
                 else:
                     assignee = project_people_queryset(task.project).filter(pk=assignee_id).first()
                     if not assignee:
                         messages.error(request, 'Исполнитель должен быть владельцем или участником проекта.')
                     else:
+                        old_assignee_id = task.assignee_id
                         task.assignee = assignee
                         task.save(update_fields=['assignee'])
+                        record_task_history(task, user, 'assignee', old_assignee_id, assignee.id)
                         messages.success(request, f'Исполнитель обновлён: {assignee.username}')
             except Task.DoesNotExist:
                 messages.error(request, 'Задача не найдена.')
